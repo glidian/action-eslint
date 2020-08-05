@@ -84,13 +84,23 @@ async function run() {
 
   try {
     const { conclusion, output } = await eslint(filesToLint);
-    await octokit.checks.update({
-      ...context.repo,
-      check_run_id: checkId,
-      completed_at: new Date().toISOString(),
-      conclusion,
-      output
-    });
+    const remainingAnnotations = [...output.annotations]
+    let done = false;
+
+    do {
+      const annotations = remainingAnnotations.splice(0, 50);
+      done = !!annotations.length;
+      await octokit.checks.update({
+        ...context.repo,
+        check_run_id: checkId,
+        completed_at: done ? new Date().toISOString() : undefined,
+        conclusion: done ? conclusion : undefined,
+        output: {
+          ...output,
+          annotations
+        }
+      });
+    } while (remainingAnnotations.length);
 
     if (conclusion === 'failure') {
       core.setFailed(`ESLint found some errors`);
