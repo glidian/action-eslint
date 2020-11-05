@@ -21,11 +21,6 @@ async function run() {
       query($owner: String!, $name: String!, $prNumber: Int!) {
         repository(owner: $owner, name: $name) {
           pullRequest(number: $prNumber) {
-            files(first: 100) {
-              nodes {
-                path
-              }
-            }
             commits(last: 1) {
               nodes {
                 commit {
@@ -43,13 +38,22 @@ async function run() {
       prNumber: context.issue.number
     }
   );
-  const currentSha = prInfo.repository.pullRequest.commits.nodes[0].commit.oid;
-  console.log('Commit from GraphQL:', currentSha);
-  const files = prInfo.repository.pullRequest.files.nodes;
 
-  const filesToLint = files
-    .filter(f => EXTENSIONS_TO_LINT.has(path.extname(f.path)))
-    .map(f => f.path);
+  const prFiles = await octokit.request(
+    'GET /repos/{owner}/{repo}/pulls/{prNumber}/files',
+    {
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      prNumber: context.issue.number
+    }
+  );
+
+
+  const currentSha = prInfo.repository.pullRequest.commits.nodes[0].commit.oid;
+
+  const filesToLint = prFiles
+    .filter(f => EXTENSIONS_TO_LINT.has(path.extname(f.filename)) && f.status !== "removed")
+    .map(f => f.filename);
   if (filesToLint.length < 1) {
     console.warn(
       `No files with [${[...EXTENSIONS_TO_LINT].join(
