@@ -51,7 +51,7 @@ async function run() {
 
   const currentSha = prInfo.repository.pullRequest.commits.nodes[0].commit.oid;
 
-  const filesToLint = prFiles
+  const filesToLint = prFiles.data
     .filter(f => EXTENSIONS_TO_LINT.has(path.extname(f.filename)) && f.status !== "removed")
     .map(f => f.filename);
   if (filesToLint.length < 1) {
