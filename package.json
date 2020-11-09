@@ -1,6 +1,6 @@
 {
   "name": "eslint-gihub-lint-action",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "GitHub Action to run ESLint",
   "main": "lib/main.js",
